@@ -112,7 +112,7 @@
 </head>
 <body>
 
-    <div id="time-up-display">TIME'S UP!</div>
+    <div id="time-up-display">TIME IS UP</div>
 
     <nav>
         <div style="grid-column: 1;">
@@ -190,7 +190,7 @@
                 <button class="btn-spin" onclick="spinWheel(1)">SPIN!</button>
                 <div id="w1-extra-buttons" style="display:none; flex-direction:column;">
                     <button class="btn-save" onclick="saveWheel1Data()">💾 SAVE</button>
-                    <button class="btn-delete" onclick="deleteWheel1Data()">🗑️ CLEAR</button>
+                    <button class="btn-delete" onclick="deleteWheel1Data()">🗑️️ CLEAR</button>
                 </div>
             </div>
         </div>
@@ -213,7 +213,7 @@
         </div>
     </div>
 
-    <!-- SECTION CONNEXION & REGLAGES (GARDÉS EN FRANÇAIS) -->
+    <!-- SECTION CONNEXION & REGLAGES -->
     <div id="section-login" class="section">
         <!-- Formulaire de Connexion -->
         <div id="login-form" class="admin-box" style="max-width: 400px;">
@@ -274,8 +274,8 @@
                 <div class="admin-row" style="margin-top:8px;">
                     <label>Son de décompte (Tic-Tac) :</label>
                     <select id="setting-tick-sound" style="width:100px;">
-                        <option value="true" selected>Activé</option>
-                        <option value="false">Désactivé</option>
+                        <option value="true">Activé</option>
+                        <option value="false" selected>Désactivé</option>
                     </select>
                 </div>
                 <div class="admin-row" style="margin-top:8px;">
@@ -332,7 +332,7 @@
             2: { students: [], rotation: 0, isSpinning: false }
         };
         let timerInterval = null, totalTime = 60, remainingTime = 60, isMuted = false, isPaused = false;
-        let config = { spinDuration: 5, tickSound: true, showDate: true, w1Buttons: false };
+        let config = { spinDuration: 5, tickSound: false, showDate: true, w1Buttons: false };
         const colors = ["#e74c3c", "#3498db", "#f1c40f", "#2ecc71", "#9b59b6", "#e67e22", "#1abc9c", "#d35400"];
 
         let audioCtx = null;
@@ -412,7 +412,7 @@
             document.getElementById('muteBtn').innerText = isMuted ? "🔇" : "🔊"; 
         }
 
-        /* --- LOGIQUE DE L'ESPACE ADMINISTRATION (CONSERVÉ EN FRANÇAIS) --- */
+        /* --- LOGIQUE DE L'ESPACE ADMINISTRATION --- */
         function handleLogin() {
             const u = document.getElementById('username-input').value;
             const p = document.getElementById('password-input').value;
@@ -445,7 +445,7 @@
             document.getElementById('setting-title-w1').value = localStorage.getItem('teacher_w1_title') || "WHEEL 1";
             document.getElementById('setting-title-w2').value = localStorage.getItem('teacher_w2_title') || "WHEEL 2";
             document.getElementById('setting-spin-duration').value = parseInt(localStorage.getItem('teacher_spin_duration')) || 5;
-            document.getElementById('setting-tick-sound').value = localStorage.getItem('teacher_tick_sound') !== 'false' ? 'true' : 'false';
+            document.getElementById('setting-tick-sound').value = localStorage.getItem('teacher_tick_sound') === 'true' ? 'true' : 'false';
             document.getElementById('setting-show-date').value = localStorage.getItem('teacher_show_date') !== 'false' ? 'true' : 'false';
             document.getElementById('setting-w1-buttons').value = localStorage.getItem('teacher_w1_buttons') === 'true' ? 'true' : 'false';
             document.getElementById('setting-default-theme').value = localStorage.getItem('teacher_default_theme') || 'bretagne';
@@ -493,7 +493,7 @@
             const w1Title = localStorage.getItem('teacher_w1_title') || "WHEEL 1";
             const w2Title = localStorage.getItem('teacher_w2_title') || "WHEEL 2";
             config.spinDuration = parseInt(localStorage.getItem('teacher_spin_duration')) || 5;
-            config.tickSound = localStorage.getItem('teacher_tick_sound') !== 'false';
+            config.tickSound = localStorage.getItem('teacher_tick_sound') === 'true';
             config.showDate = localStorage.getItem('teacher_show_date') !== 'false';
             config.w1Buttons = localStorage.getItem('teacher_w1_buttons') === 'true';
             
