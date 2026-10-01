@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Hub - Classroom Tools</title>
+    <style>
+        :root {
+            --bg-bretagne: url('https://media.istockphoto.com/id/471826199/fr/photo/fran%C3%A7ais-typique-maison-bretagne.jpg?s=612x612&w=0&k=20&c=fM8P2PnPKuy7fCnv46dueIoM94QlszFbP5MDNh0o7Dk=');
+            --bg-usa: url('https://www.visittheusa.fr/sites/default/files/styles/16_9_770x433/public/images/hero_media_image/2017-06/1ea456ae0320feb241ca5a977704daa7.jpeg?itok=IlWUWY1v');
+            --bg-nyc: url('https://www.visittheusa.fr/sites/default/files/styles/16_9_770x433/public/images/hero_media_image/2017-06/187c45a43c9b2f58963f764e3485ac64.jpeg?itok=36VA77rO');
+            --bg-library: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1920');
+            --nav-bg: #111;
+            --border-green: #2ecc71;
+            --accent-yellow: #f1c40f;
+            --wheel-rotation-1: 0deg;
+            --wheel-rotation-2: 0deg;
+            --spin-duration: 5s;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        body { 
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), var(--bg-bretagne);
+            background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; overflow-x: hidden;
+            transition: background 0.8s ease-in-out;
+        }
+
+        #time-up-display {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 80px; font-weight: 900; color: #e74c3c; text-shadow: 5px 5px 15px rgba(0,0,0,0.8);
+            z-index: 1000; display: none; pointer-events: none;
+            animation: pulse-red 0.8s infinite; white-space: nowrap; text-align: center;
+        }
+
+        nav {
+            width: 100%; background: var(--nav-bg); display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: center; padding: 10px 30px; box-sizing: border-box; border-bottom: 2px solid #333;
+        }
+
+        .tab-group { grid-column: 2; display: flex; gap: 10px; }
+        .timer-controls { grid-column: 3; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+
+        .tab { padding: 8px 20px; cursor: pointer; font-weight: bold; border-radius: 8px; background: #222; color: white; border: 1px solid #444; }
+        .tab.active { background: var(--border-green); border-color: var(--border-green); }
+
+        #timer-display { font-family: monospace; font-size: 36px; color: var(--accent-yellow); font-weight: bold; }
+
+        .header { margin-top: 15px; text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        #date-display { font-size: 19px; background: rgba(0,0,0,0.7); padding: 7px 25px; border-radius: 30px; margin-bottom: 12px; text-transform: capitalize; cursor: pointer; user-select: none; }
+        #activity-input { width: 55%; padding: 12px; font-size: 28px; font-weight: bold; text-align: center; border: 3px solid var(--border-green); border-radius: 12px; outline: none; background: rgba(255,255,255,0.98); color: black; }
+
+        .section { display: none; width: 100%; justify-content: center; align-items: center; margin-top: 20px; }
+        .visible { display: flex !important; }
+
+        .clock-wrapper { position: relative; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center; }
+        #progress-ring { position: absolute; transform: rotate(-90deg); }
+        #progress-ring circle { fill: transparent; stroke: var(--border-green); stroke-width: 12; stroke-dasharray: 1130; stroke-dashoffset: 0; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+        #analog { width: 340px; height: 340px; background: white; border-radius: 50%; position: relative; border: 8px solid #222; color: black; }
+        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; background: #222; transform: translateX(-50%); border-radius: 10px; }
+        .hour { width: 8px; height: 75px; } .min { width: 6px; height: 105px; } .sec { width: 2px; height: 125px; background: #e74c3c; }
+        .number { position: absolute; width: 100%; height: 100%; text-align: center; font-size: 22px; font-weight: bold; padding: 10px; box-sizing: border-box; }
+
+        .wheel-container { display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 40px; background: rgba(0,0,0,0.5); padding: 25px; border-radius: 25px; max-width: 90%; }
+        .wheel-box { 
+            position: relative; width: 420px; height: 420px; border: 10px solid white; border-radius: 50%; 
+            overflow: hidden; background: white;
+            transition: transform var(--spin-duration) cubic-bezier(0.1, 0, 0.1, 1); 
+        }
+        #wheel-obj-1 { transform: rotate(var(--wheel-rotation-1)); }
+        #wheel-obj-2 { transform: rotate(var(--wheel-rotation-2)); }
+        
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 35px solid #e74c3c; z-index: 10; }
+        
+        .editor-panel { background: rgba(15, 15, 15, 0.95); padding: 15px; border-radius: 15px; border: 2px solid var(--border-green); width: 250px; display: flex; flex-direction: column; }
+        .names-list { width: 100%; height: 260px; background: #000; color: #fff; border: 1px solid #444; padding: 8px; resize: none; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .btn-spin { margin-top: 10px; padding: 12px; font-size: 18px; font-weight: bold; background: #e67e22; color: white; border: none; border-radius: 30px; cursor: pointer; }
+        .btn-save { margin-top: 8px; padding: 10px; font-size: 13px; font-weight: bold; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .btn-delete { margin-top: 8px; padding: 10px; font-size: 13px; font-weight: bold; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; }
+
+        .mute-control { position: fixed; bottom: 20px; left: 20px; z-index: 100; }
+        .btn-circle { width: 55px; height: 55px; border-radius: 50%; border: 2px solid white; background: rgba(0,0,0,0.8); color: white; cursor: pointer; font-size: 22px; }
+        #result-display { font-size: 36px; color: var(--accent-yellow); font-weight: bold; height: 50px; margin-top: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+
+        .admin-box {
+            background: rgba(15, 15, 15, 0.95); padding: 25px; border-radius: 15px; border: 2px solid var(--border-green);
+            width: 90%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; box-sizing: border-box;
+        }
+        .admin-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .admin-row label { font-size: 14px; color: #ccc; }
+        .admin-row input, .admin-row select, .admin-row textarea {
+            padding: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box;
+        }
+
+        @media (max-width: 850px) {
+            nav { display: flex; flex-direction: row; justify-content: center; gap: 10px; padding: 5px 10px; flex-wrap: wrap; }
+            .tab { padding: 5px 12px; font-size: 11px; min-width: 60px; border-radius: 15px; }
+            #timer-display { font-size: 24px; min-width: 70px; }
+            #timerInput { width: 40px !important; }
+            #time-up-display { font-size: 40px; }
+            .clock-wrapper { transform: scale(0.65); margin: -60px 0; }
+            .wheel-container { scale: 0.8; flex-direction: column; align-items: center; gap: 20px; }
+            .names-list { height: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="time-up-display">TIME'S UP!</div>
+
+    <nav>
+        <div style="grid-column: 1;">
+            <select id="themeChoice" onchange="changeTheme()" style="padding:5px; border-radius:5px; font-weight:bold; cursor:pointer;">
+                <option value="bretagne">🏠 Brittany</option>
+                <option value="usa">🏛 Washington</option>
+                <option value="nyc">🗽 New York</option>
+                <option value="library">📚 Library</option>
+            </select>
+        </div>
+
+        <div class="tab-group">
+            <button id="t-clock" class="tab active" onclick="switchTab('clock', this)">CLOCK</button>
+            <button id="t-wheel1" class="tab" onclick="switchTab('wheel1', this)"><span id="label-w1">WHEEL 1</span></button>
+            <button id="t-wheel2" class="tab" onclick="switchTab('wheel2', this)"><span id="label-w2">WHEEL 2</span></button>
+        </div>
+
+        <div class="timer-controls">
+            <span id="timer-display">01:00</span>
+            <input type="number" id="timerInput" value="1" min="1" style="width:50px; padding:5px; border-radius:5px; text-align:center;">
+            <select id="timerUnit" style="padding:5px; border-radius:5px; font-weight:bold; cursor:pointer;">
+                <option value="min" selected>min</option>
+                <option value="sec">sec</option>
+            </select>
+            <button id="btn-start" onclick="startTimer()" style="background:#2ecc71; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">START</button>
+            <button id="btn-pause" onclick="pauseTimer()" style="background:#f39c12; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">PAUSE</button>
+            <button onclick="stopTimer()" style="background:#e74c3c; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">STOP</button>
+        </div>
+    </nav>
+
+    <div class="header">
+        <div id="date-display" ondblclick="openHiddenLogin()">...</div>
+        <input type="text" id="activity-input" placeholder="ENTER ACTIVITY NAME HERE">
+        <div id="result-display"></div>
+    </div>
+
+    <div class="mute-control">
+        <button class="btn-circle" onclick="toggleMute()" id="muteBtn">🔊</button>
+    </div>
+
+    <!-- SECTION CLOCK -->
+    <div id="section-clock" class="section visible">
+        <div class="clock-wrapper">
+            <svg id="progress-ring" width="380" height="380"><circle cx="190" cy="190" r="180"></circle></svg>
+            <div id="analog">
+                <div class="number" style="transform: rotate(30deg);"><span style="display:inline-block; transform: rotate(-30deg);">1</span></div>
+                <div class="number" style="transform: rotate(60deg);"><span style="display:inline-block; transform: rotate(-60deg);">2</span></div>
+                <div class="number" style="transform: rotate(90deg);"><span style="display:inline-block; transform: rotate(-90deg);">3</span></div>
+                <div class="number" style="transform: rotate(120deg);"><span style="display:inline-block; transform: rotate(-120deg);">4</span></div>
+                <div class="number" style="transform: rotate(150deg);"><span style="display:inline-block; transform: rotate(-150deg);">5</span></div>
+                <div class="number" style="transform: rotate(180deg);"><span style="display:inline-block; transform: rotate(-180deg);">6</span></div>
+                <div class="number" style="transform: rotate(210deg);"><span style="display:inline-block; transform: rotate(-210deg);">7</span></div>
+                <div class="number" style="transform: rotate(240deg);"><span style="display:inline-block; transform: rotate(-240deg);">8</span></div>
+                <div class="number" style="transform: rotate(270deg);"><span style="display:inline-block; transform: rotate(-270deg);">9</span></div>
+                <div class="number" style="transform: rotate(300deg);"><span style="display:inline-block; transform: rotate(-300deg);">10</span></div>
+                <div class="number" style="transform: rotate(330deg);"><span style="display:inline-block; transform: rotate(-330deg);">11</span></div>
+                <div class="number" style="transform: rotate(0deg);">12</div>
+                <div id="h-hand" class="hand hour"></div>
+                <div id="min-hand" class="hand min"></div>
+                <div id="sec-hand" class="hand sec"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION WHEEL 1 -->
+    <div id="section-wheel1" class="section">
+        <div class="wheel-container">
+            <div class="wheel-box-wrapper" style="position:relative;">
+                <div class="pointer"></div>
+                <div id="wheel-obj-1" class="wheel-box"><canvas id="canvas-wheel-1" width="500" height="500" style="width:100%; height:100%;"></canvas></div>
+            </div>
+            <div class="editor-panel">
+                <h3 id="panel-title-1" style="color:var(--border-green); margin-top:0;">STUDENTS (1):</h3>
+                <textarea id="names-list-1" class="names-list" oninput="updateWheelData(1)">Antonin&#10;Marley&#10;Jules&#10;Jeremy&#10;Youri&#10;Romane&#10;Johan&#10;Mehdi&#10;Thomas&#10;Evan&#10;Tom&#10;Leo&#10;Fabien&#10;Yovann&#10;Ethan&#10;Alexis&#10;Leandre&#10;Kilian</textarea>
+                <button class="btn-spin" onclick="spinWheel(1)">SPIN!</button>
+                <div id="w1-extra-buttons" style="display:none; flex-direction:column;">
+                    <button class="btn-save" onclick="saveWheel1Data()">💾 SAVE</button>
+                    <button class="btn-delete" onclick="deleteWheel1Data()">🗑️ CLEAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION WHEEL 2 -->
+    <div id="section-wheel2" class="section">
+        <div class="wheel-container">
+            <div class="wheel-box-wrapper" style="position:relative;">
+                <div class="pointer"></div>
+                <div id="wheel-obj-2" class="wheel-box"><canvas id="canvas-wheel-2" width="500" height="500" style="width:100%; height:100%;"></canvas></div>
+            </div>
+            <div class="editor-panel">
+                <h3 id="panel-title-2" style="color:var(--border-green); margin-top:0;">STUDENTS (2):</h3>
+                <textarea id="names-list-2" class="names-list" placeholder="Enter names here..." oninput="updateWheelData(2)"></textarea>
+                <button class="btn-spin" onclick="spinWheel(2)">SPIN!</button>
+                <button class="btn-save" onclick="saveWheel2Data()">💾 SAVE</button>
+                <button class="btn-delete" onclick="deleteWheel2Data()">🗑️ CLEAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION CONNEXION & REGLAGES (GARDÉS EN FRANÇAIS) -->
+    <div id="section-login" class="section">
+        <!-- Formulaire de Connexion -->
+        <div id="login-form" class="admin-box" style="max-width: 400px;">
+            <h2 style="color:var(--border-green); margin-top:0; text-align:center;">🔒 Espace Administration</h2>
+            <div class="admin-row" style="flex-direction:column; align-items:flex-start;">
+                <label>Identifiant :</label>
+                <input type="text" id="username-input" placeholder="admin" style="width:100%;">
+            </div>
+            <div class="admin-row" style="flex-direction:column; align-items:flex-start;">
+                <label>Mot de passe :</label>
+                <input type="password" id="password-input" placeholder="admin123" style="width:100%;">
+            </div>
+            <p id="login-error" style="color:#e74c3c; display:none; margin:0; text-align:center; font-weight:bold;">Identifiant ou mot de passe incorrect</p>
+            <button onclick="handleLogin()" style="background:var(--border-green); border:none; color:white; padding:12px; font-weight:bold; border-radius:8px; cursor:pointer; font-size:16px;">SE CONNECTER</button>
+            <p style="font-size:12px; color:#aaa; text-align:center; margin-bottom:0;">Compte par défaut : admin / admin123</p>
+        </div>
+
+        <!-- Panneau d'Administration -->
+        <div id="admin-panel" class="admin-box" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #333; padding-bottom:10px;">
+                <h2 style="color:var(--border-green); margin:0;">⚙️ Panneau de Contrôle Global</h2>
+                <button onclick="handleLogout()" style="background:#c0392b; border:none; color:white; padding:6px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">Déconnexion</button>
+            </div>
+
+            <!-- Identifiants de connexion -->
+            <div style="border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <h3 style="color:var(--accent-yellow); margin:5px 0 10px 0;">🔐 Sécurité du Compte</h3>
+                <div class="admin-row">
+                    <label>Nouvel Identifiant :</label>
+                    <input type="text" id="admin-user-val" style="width:200px;">
+                </div>
+                <div class="admin-row" style="margin-top:8px;">
+                    <label>Nouveau Mot de passe :</label>
+                    <input type="password" id="admin-pass-val" style="width:200px;">
+                </div>
+            </div>
+
+            <!-- Configuration Globale & Noms d'Onglets -->
+            <div style="border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <h3 style="color:var(--accent-yellow); margin:5px 0 10px 0;">🏷️ Nom des Onglets</h3>
+                <div class="admin-row">
+                    <label>Nom du bouton Roue 1 :</label>
+                    <input type="text" id="setting-title-w1" value="WHEEL 1" style="width:200px;">
+                </div>
+                <div class="admin-row" style="margin-top:8px;">
+                    <label>Nom du bouton Roue 2 :</label>
+                    <input type="text" id="setting-title-w2" value="WHEEL 2" style="width:200px;">
+                </div>
+            </div>
+
+            <!-- Paramètres Avancés de la Roue et de la Classe -->
+            <div style="border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <h3 style="color:var(--accent-yellow); margin:5px 0 10px 0;">⚙️ Réglages Avancés</h3>
+                <div class="admin-row">
+                    <label>Durée de rotation des roues (secondes) :</label>
+                    <input type="number" id="setting-spin-duration" value="5" min="1" max="15" style="width:80px;">
+                </div>
+                <div class="admin-row" style="margin-top:8px;">
+                    <label>Son de décompte (Tic-Tac) :</label>
+                    <select id="setting-tick-sound" style="width:100px;">
+                        <option value="true" selected>Activé</option>
+                        <option value="false">Désactivé</option>
+                    </select>
+                </div>
+                <div class="admin-row" style="margin-top:8px;">
+                    <label>Afficher le bandeau de date :</label>
+                    <select id="setting-show-date" style="width:100px;">
+                        <option value="true" selected>Oui</option>
+                        <option value="false">Non</option>
+                    </select>
+                </div>
+                <div class="admin-row" style="margin-top:8px;">
+                    <label>Boutons Sauvegarder/Effacer sur Roue 1 :</label>
+                    <select id="setting-w1-buttons" style="width:100px;">
+                        <option value="false" selected>Masqués</option>
+                        <option value="true">Affichés</option>
+                    </select>
+                </div>
+                <div class="admin-row" style="margin-top:8px;">
+                    <label>Thème par défaut :</label>
+                    <select id="setting-default-theme" style="width:120px;">
+                        <option value="bretagne">Bretagne</option>
+                        <option value="usa">Washington</option>
+                        <option value="nyc">New York</option>
+                        <option value="library">Bibliothèque</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Gestion Directe des Listes d'Élèves -->
+            <div style="border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <h3 style="color:var(--accent-yellow); margin:5px 0 10px 0;">👥 Editeur de Listes d'Élèves</h3>
+                <div style="display:flex; gap:15px;">
+                    <div style="flex:1;">
+                        <label style="font-size:12px; display:block; margin-bottom:5px;">Liste Roue 1 :</label>
+                        <textarea id="admin-list-1" style="width:100%; height:100px; background:#000; color:#fff; border:1px solid #444; border-radius:5px; padding:5px;"></textarea>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:12px; display:block; margin-bottom:5px;">Liste Roue 2 :</label>
+                        <textarea id="admin-list-2" style="width:100%; height:100px; background:#000; color:#fff; border:1px solid #444; border-radius:5px; padding:5px;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions d'enregistrement -->
+            <div style="display:flex; justify-content:space-between; gap:10px; margin-top:10px;">
+                <button onclick="resetToFactory()" style="background:#7f8c8d; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">Réinitialiser Tout</button>
+                <button onclick="saveAllSettings()" style="background:var(--border-green); border:none; color:white; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:16px;">ENREGISTRER TOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let wheelsData = {
+            1: { students: [], rotation: 0, isSpinning: false },
+            2: { students: [], rotation: 0, isSpinning: false }
+        };
+        let timerInterval = null, totalTime = 60, remainingTime = 60, isMuted = false, isPaused = false;
+        let config = { spinDuration: 5, tickSound: true, showDate: true, w1Buttons: false };
+        const colors = ["#e74c3c", "#3498db", "#f1c40f", "#2ecc71", "#9b59b6", "#e67e22", "#1abc9c", "#d35400"];
+
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTickSound() {
+            if (isMuted || !config.tickSound) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playAlarmSound() {
+            if (isMuted) return;
+            initAudio();
+            let count = 0;
+            const interval = setInterval(() => {
+                if (count >= 5 || remainingTime > 0) {
+                    clearInterval(interval);
+                    return;
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+                count++;
+            }, 350);
+        }
+
+        function switchTab(mode, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if(el) el.classList.add('active');
+            
+            document.getElementById('section-clock').classList.toggle('visible', mode === 'clock');
+            document.getElementById('section-wheel1').classList.toggle('visible', mode === 'wheel1');
+            document.getElementById('section-wheel2').classList.toggle('visible', mode === 'wheel2');
+            document.getElementById('section-login').classList.toggle('visible', mode === 'login');
+            
+            document.getElementById('result-display').innerText = "";
+            document.getElementById('activity-input').style.display = (mode === 'clock') ? 'block' : 'none';
+        }
+
+        function openHiddenLogin() {
+            switchTab('login', null);
+        }
+
+        function changeTheme() { 
+            const selected = document.getElementById('themeChoice').value; 
+            const themes = { bretagne: "var(--bg-bretagne)", usa: "var(--bg-usa)", nyc: "var(--bg-nyc)", library: "var(--bg-library)" }; 
+            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), ${themes[selected]}`; 
+        }
+
+        function toggleMute() { 
+            isMuted = !isMuted; 
+            document.getElementById('muteBtn').innerText = isMuted ? "🔇" : "🔊"; 
+        }
+
+        /* --- LOGIQUE DE L'ESPACE ADMINISTRATION (CONSERVÉ EN FRANÇAIS) --- */
+        function handleLogin() {
+            const u = document.getElementById('username-input').value;
+            const p = document.getElementById('password-input').value;
+            
+            const savedU = localStorage.getItem('teacher_admin_user') || 'admin';
+            const savedP = localStorage.getItem('teacher_admin_pass') || 'admin123';
+
+            if (u === savedU && p === savedP) {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'flex';
+                document.getElementById('login-error').style.display = 'none';
+                populateAdminFields();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('login-form').style.display = 'flex';
+            document.getElementById('username-input').value = '';
+            document.getElementById('password-input').value = '';
+            switchTab('clock', document.getElementById('t-clock'));
+        }
+
+        function populateAdminFields() {
+            document.getElementById('admin-user-val').value = localStorage.getItem('teacher_admin_user') || 'admin';
+            document.getElementById('admin-pass-val').value = localStorage.getItem('teacher_admin_pass') || 'admin123';
+            
+            document.getElementById('setting-title-w1').value = localStorage.getItem('teacher_w1_title') || "WHEEL 1";
+            document.getElementById('setting-title-w2').value = localStorage.getItem('teacher_w2_title') || "WHEEL 2";
+            document.getElementById('setting-spin-duration').value = parseInt(localStorage.getItem('teacher_spin_duration')) || 5;
+            document.getElementById('setting-tick-sound').value = localStorage.getItem('teacher_tick_sound') !== 'false' ? 'true' : 'false';
+            document.getElementById('setting-show-date').value = localStorage.getItem('teacher_show_date') !== 'false' ? 'true' : 'false';
+            document.getElementById('setting-w1-buttons').value = localStorage.getItem('teacher_w1_buttons') === 'true' ? 'true' : 'false';
+            document.getElementById('setting-default-theme').value = localStorage.getItem('teacher_default_theme') || 'bretagne';
+
+            document.getElementById('admin-list-1').value = document.getElementById('names-list-1').value;
+            document.getElementById('admin-list-2').value = document.getElementById('names-list-2').value;
+        }
+
+        function saveAllSettings() {
+            localStorage.setItem('teacher_admin_user', document.getElementById('admin-user-val').value);
+            localStorage.setItem('teacher_admin_pass', document.getElementById('admin-pass-val').value);
+
+            localStorage.setItem('teacher_w1_title', document.getElementById('setting-title-w1').value);
+            localStorage.setItem('teacher_w2_title', document.getElementById('setting-title-w2').value);
+            localStorage.setItem('teacher_spin_duration', document.getElementById('setting-spin-duration').value);
+            localStorage.setItem('teacher_tick_sound', document.getElementById('setting-tick-sound').value);
+            localStorage.setItem('teacher_show_date', document.getElementById('setting-show-date').value);
+            localStorage.setItem('teacher_w1_buttons', document.getElementById('setting-w1-buttons').value);
+            localStorage.setItem('teacher_default_theme', document.getElementById('setting-default-theme').value);
+
+            const list1 = document.getElementById('admin-list-1').value;
+            const list2 = document.getElementById('admin-list-2').value;
+
+            document.getElementById('names-list-1').value = list1;
+            document.getElementById('names-list-2').value = list2;
+
+            localStorage.setItem('teacher_wheel_names_1', list1);
+            localStorage.setItem('teacher_wheel_names_2', list2);
+
+            applySettings();
+            updateWheelData(1);
+            updateWheelData(2);
+
+            alert("Tous les réglages ont été enregistrés avec succès !");
+        }
+
+        function resetToFactory() {
+            if (confirm("Voulez-vous vraiment réinitialiser TOUS les paramètres de l'application ?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function applySettings() {
+            const w1Title = localStorage.getItem('teacher_w1_title') || "WHEEL 1";
+            const w2Title = localStorage.getItem('teacher_w2_title') || "WHEEL 2";
+            config.spinDuration = parseInt(localStorage.getItem('teacher_spin_duration')) || 5;
+            config.tickSound = localStorage.getItem('teacher_tick_sound') !== 'false';
+            config.showDate = localStorage.getItem('teacher_show_date') !== 'false';
+            config.w1Buttons = localStorage.getItem('teacher_w1_buttons') === 'true';
+            
+            const defaultTheme = localStorage.getItem('teacher_default_theme') || 'bretagne';
+            document.getElementById('themeChoice').value = defaultTheme;
+            changeTheme();
+
+            document.getElementById('label-w1').innerText = w1Title;
+            document.getElementById('label-w2').innerText = w2Title;
+            document.getElementById('panel-title-1').innerText = w1Title.toUpperCase() + ":";
+            document.getElementById('panel-title-2').innerText = w2Title.toUpperCase() + ":";
+
+            document.documentElement.style.setProperty('--spin-duration', `${config.spinDuration}s`);
+            document.getElementById('date-display').style.display = config.showDate ? 'block' : 'none';
+            document.getElementById('w1-extra-buttons').style.display = config.w1Buttons ? 'flex' : 'none';
+        }
+
+        /* --- TIMER CONTROL --- */
+        function startTimer() {
+            initAudio();
+            document.getElementById('time-up-display').style.display = 'none';
+            clearInterval(timerInterval);
+            
+            isPaused = false;
+            document.getElementById('btn-pause').innerText = "PAUSE";
+
+            const inputVal = parseInt(document.getElementById('timerInput').value) || 0;
+            const unit = document.getElementById('timerUnit').value;
+            const multiplier = (unit === 'min') ? 60 : 1;
+
+            totalTime = Math.max(1, inputVal) * multiplier;
+            remainingTime = totalTime;
+            updateTimerDisplay();
+            
+            runTimerLoop();
+        }
+
+        function pauseTimer() {
+            if (remainingTime <= 0) return;
+            if (!isPaused) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isPaused = true;
+                document.getElementById('btn-pause').innerText = "RESUME";
+            } else {
+                isPaused = false;
+                document.getElementById('btn-pause').innerText = "PAUSE";
+                runTimerLoop();
+            }
+        }
+
+        function runTimerLoop() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                remainingTime--; 
+                updateTimerDisplay();
+                playTickSound();
+
+                if(remainingTime <= 0) { 
+                    clearInterval(timerInterval); 
+                    timerInterval = null;
+                    playAlarmSound();
+                    document.getElementById('time-up-display').style.display = 'block';
+                    setTimeout(() => { 
+                        document.getElementById('time-up-display').style.display = 'none'; 
+                    }, 3000);
+                }
+            }, 1000);
+        }
+
+        function stopTimer() { 
+            clearInterval(timerInterval); 
+            timerInterval = null;
+            remainingTime = 0; 
+            isPaused = false;
+            document.getElementById('btn-pause').innerText = "PAUSE";
+            document.getElementById('timer-display').innerText = "00:00"; 
+            document.querySelector('#progress-ring circle').style.strokeDashoffset = 0; 
+            document.getElementById('time-up-display').style.display = 'none';
+        }
+
+        function updateTimerDisplay() {
+            let m = Math.floor(remainingTime / 60), s = remainingTime % 60;
+            document.getElementById('timer-display').innerText = `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+            const circle = document.querySelector('#progress-ring circle');
+            const offset = 1130 - (remainingTime / (totalTime || 1)) * 1130;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        /* --- WHEELS CONTROL --- */
+        function updateWheelData(id) {
+            const listVal = document.getElementById(`names-list-${id}`).value;
+            wheelsData[id].students = listVal.split('\n').filter(n => n.trim() !== "");
+            const canvas = document.getElementById(`canvas-wheel-${id}`), ctx = canvas.getContext('2d');
+            ctx.clearRect(0,0,500,500);
+            
+            const students = wheelsData[id].students;
+            if(students.length === 0) return;
+            
+            const arc = (Math.PI * 2) / students.length;
+            students.forEach((name, i) => {
+                ctx.fillStyle = colors[i % colors.length]; ctx.beginPath(); ctx.moveTo(250,250); ctx.arc(250,250,250, i*arc, (i+1)*arc); ctx.fill();
+                ctx.save(); ctx.translate(250,250); ctx.rotate(i*arc + arc/2);
+                ctx.fillStyle = "white"; ctx.font = "bold 18px Arial"; ctx.textAlign = "right"; ctx.fillText(name, 230, 8); ctx.restore();
+            });
+        }
+
+        function saveWheel1Data() {
+            const listVal = document.getElementById('names-list-1').value;
+            localStorage.setItem('teacher_wheel_names_1', listVal);
+            alert("Roue 1 sauvegardée !");
+        }
+
+        function deleteWheel1Data() {
+            if (confirm("Voulez-vous effacer les noms de la Roue 1 ?")) {
+                document.getElementById('names-list-1').value = "";
+                localStorage.removeItem('teacher_wheel_names_1');
+                updateWheelData(1);
+            }
+        }
+
+        function saveWheel2Data() {
+            const listVal = document.getElementById('names-list-2').value;
+            localStorage.setItem('teacher_wheel_names_2', listVal);
+            alert("Roue 2 sauvegardée !");
+        }
+
+        function deleteWheel2Data() {
+            if (confirm("Voulez-vous effacer les noms de la Roue 2 ?")) {
+                document.getElementById('names-list-2').value = "";
+                localStorage.removeItem('teacher_wheel_names_2');
+                updateWheelData(2);
+            }
+        }
+
+        function spinWheel(id) {
+            initAudio();
+            const w = wheelsData[id];
+            if(w.isSpinning || w.students.length === 0) return;
+            w.isSpinning = true;
+            document.getElementById('result-display').innerText = "...";
+            
+            const deg = Math.floor(Math.random() * 360) + 3600;
+            w.rotation += deg; 
+            document.documentElement.style.setProperty(`--wheel-rotation-${id}`, `${w.rotation}deg`);
+            
+            setTimeout(() => {
+                w.isSpinning = false;
+                const actualDeg = w.rotation % 360; const arcDeg = 360 / w.students.length;
+                const idx = Math.floor(((360 - actualDeg + 270) % 360) / arcDeg);
+                const selectedStudent = w.students[idx];
+                document.getElementById('result-display').innerText = "⭐ " + selectedStudent + " ⭐";
+                
+                w.students.splice(idx, 1);
+                document.getElementById(`names-list-${id}`).value = w.students.join('\n');
+                updateWheelData(id);
+            }, config.spinDuration * 1000);
+        }
+
+        function loadSavedData() {
+            const savedWheel1 = localStorage.getItem('teacher_wheel_names_1');
+            if (savedWheel1 !== null) document.getElementById('names-list-1').value = savedWheel1;
+
+            const savedWheel2 = localStorage.getItem('teacher_wheel_names_2');
+            if (savedWheel2 !== null) document.getElementById('names-list-2').value = savedWheel2;
+
+            applySettings();
+            updateWheelData(1);
+            updateWheelData(2);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+            const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+            document.getElementById('sec-hand').style.transform = `translateX(-50%) rotate(${s*6}deg)`;
+            document.getElementById('min-hand').style.transform = `translateX(-50%) rotate(${m*6}deg)`;
+            document.getElementById('h-hand').style.transform = `translateX(-50%) rotate(${h*30 + m*0.5}deg)`;
+        }
+        
+        setInterval(updateClock, 1000); 
+        loadSavedData(); 
+        updateClock();
+    </script>
+</body>
+</html>
